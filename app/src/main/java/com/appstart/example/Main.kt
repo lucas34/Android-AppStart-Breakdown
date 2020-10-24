@@ -8,6 +8,7 @@ import android.os.SystemClock
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import java.util.concurrent.TimeUnit
+import kotlin.time.TimeSource.Monotonic
 import kotlin.time.*
 
 @ExperimentalTime
@@ -20,7 +21,7 @@ class MyApplication: Application() {
     val dexLoadTime = SystemClock.currentThreadTimeMillis().toDouble().toDuration(TimeUnit.MILLISECONDS)
 
     /// (Step 2) Start a clock now to measure variable definition on the class
-    private val singleTracer = MonoClock.markNow()
+    private val singleTracer = Monotonic.markNow()
 
     ///////////////////////////////////////////////
     ///                                         ///
@@ -32,9 +33,9 @@ class MyApplication: Application() {
     var contentProviderInit: Duration? = null
     var applicationOnCreate: Duration? = null
 
-    lateinit var activityCreateDelta: ClockMark
+    lateinit var activityCreateDelta: TimeMark
 
-    override fun onCreate() = MonoClock.markNow().also {
+    override fun onCreate() = Monotonic.markNow().also {
         /// (Step 3) At this point the content providers are already init
         contentProviderInit = contentProviderTracker.elapsedNow()
 
@@ -48,7 +49,7 @@ class MyApplication: Application() {
 
     }.let {
         applicationOnCreate = it.elapsedNow()
-        activityCreateDelta = MonoClock.markNow()
+        activityCreateDelta = Monotonic.markNow()
     }
 
     /// This need to be the LAST line of code in the class
@@ -56,13 +57,13 @@ class MyApplication: Application() {
 
     /// Start a clock now to measure variable definition on the class
     /// Put at the very last to make sure we are not counting the class attribute twice
-    private val contentProviderTracker = MonoClock.markNow()
+    private val contentProviderTracker = Monotonic.markNow()
 }
 
 @ExperimentalTime
 class MainActivity : AppCompatActivity() {
 
-    private val singleTracer = MonoClock.markNow()
+    private val singleTracer = Monotonic.markNow()
 
     private var activityPreOnCreate: Duration? = null
 
@@ -75,7 +76,7 @@ class MainActivity : AppCompatActivity() {
         activityPreOnCreate = app.activityCreateDelta.elapsedNow() - variablesInit
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) = MonoClock.markNow().also {
+    override fun onCreate(savedInstanceState: Bundle?) = Monotonic.markNow().also {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
     }.let {
